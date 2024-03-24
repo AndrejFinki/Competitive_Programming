@@ -1,2 +1,2 @@
-# Kattis
-Kattis OJ Solution Set
+# Competitive Programming
+Competitive Progamming Solution Set
