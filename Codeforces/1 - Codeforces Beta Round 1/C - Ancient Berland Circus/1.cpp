@@ -3,6 +3,7 @@ using namespace std;
 #define LL long long
 #define LD long double
 #define INF (1<<30)
+#define ERR (1e-6)
 
 class Point {
 
@@ -23,6 +24,9 @@ LD distance( const Point &, const Point & );
 Point midpoint( const Point &, const Point & );
 void perpendicular_bisector( const Point &, const Point &, LD &, Point & );
 void find_inner_circle( const Point &, const Point &, const Point &, Point &, LD & );
+LD angle( const Point &, const Point & );
+bool is_multiple( const LD &, const LD & );
+LD polygon_area( const int &, const LD & );
 
 vector <Point> points;
 
@@ -43,6 +47,40 @@ int main()
 	 * 2 - Find the angle between points {1, 2}, {1, 3} as a1 and a2
 	 * 3 - Find the first n, such that, m = 360 / n and both a1 and a2 are a multiple of m
 	 */
+
+	for( int i = 0 ; i < 3 ; i++ ) {
+		points[i].x -= circumcenter.x;
+		points[i].y -= circumcenter.y;
+	}
+
+	vector <LD> angles;
+	for( int i = 0 ; i < 3 ; i++ )
+		for( int j = i+1 ; j < 3 ; j++ )
+			angles.push_back( angle( points[i], points[j] ) );
+
+
+	for( int n = 3 ; n <= 100 ; n++ ) {
+		
+		bool valid = true;
+
+		for( const LD &ang : angles ) {
+
+			LD k = ang * n / 360.0;
+			if( fabs( nearbyint( k ) - k ) < ERR ) continue;
+			valid = false;
+			break;
+
+		}
+
+		if( !valid ) continue;
+
+		cout << polygon_area( n, circumradius ) << endl;
+		return 0;
+
+	}
+
+	assert( false );
+
 }
 
 void get_input()
@@ -122,4 +160,29 @@ void find_inner_circle(
 	}
 
 	radius = distance( center, p1 );
+}
+
+LD angle(
+	const Point &p1,
+	const Point &p2
+) {
+	LD ang = atan2( p1.y - p2.y, p1.x - p2.x );
+	// while( ang < 0 ) ang += 360.0;
+	// if( ang >= 360.0 ) ang -= 360.0;
+	return ang;
+}
+
+bool is_multiple(
+	const LD &v1,
+	const LD &v2
+) {
+	int v = v1 / v2;
+	return fabsf64x( v * v2 - v1 ) < ERR;
+}
+
+LD polygon_area(
+	const int &n,
+	const LD &circumradius
+) {
+	return n * circumradius * circumradius * sinf64x( 2 * M_PI / n ) / 2;
 }
