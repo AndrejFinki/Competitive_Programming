@@ -3,8 +3,9 @@ using namespace std;
 #define LL long long
 #define LD long double
 #define INF (1<<30)
-#define ERR (1e-9)
+#define ERR (1e-5)
 #define endl '\n'
+#define M_PI ( acos( -1 ) )
 
 /* Geometry Library Begin */
 
@@ -372,7 +373,34 @@ bool Geometry::are_parallel( const Line &A, const Line &B ) {
 
 int main()
 {
-	ios::sync_with_stdio( false );
+	cout << fixed << setprecision(8);
+    Point P[3];
+    for( int i = 0 ; i < 3 ; i++ ) {
+		cin >> P[i].x >> P[i].y;
+	}
 
-	cout << "Hello imi!" << endl;
+    Triangle T( P[0], P[1], P[2] );
+	Circle out_circle = T.out_circle();
+	Point O = out_circle.o;
+	LD R = out_circle.r;
+
+    vector <LD> ANG;
+
+    for(int i=0;i<3;i++) for(int j=i+1;j<3;j++) ANG.push_back( Geometry::angle( P[i], O, P[j] ) );
+
+    for( int N=3;N<=101;N++ ){
+
+        bool valid = true;
+        for( LD a : ANG ){
+
+            LD k = a * N / 360.0L;
+            if( !Geometry::are_equal( k, nearbyint(k) ) ){ valid = false; break; }
+
+        }
+
+        if( !valid ) continue;
+        
+        cout << R*R*N*sin( Geometry::deg_to_rad( 360.0L / N ) ) / 2 << endl; break;
+
+    }
 }
