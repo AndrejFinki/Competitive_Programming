@@ -77,6 +77,21 @@ class Circle { public:
 	bool on( const Point & ) const;
 };
 
+class Triangle { public:
+	Point pa, pb, pc;
+	Line_Segment la, lb, lc;
+
+	Triangle() = default;
+	Triangle( const Point &, const Point &, const Point & );
+
+	bool is_valid() const;
+	bool is_equilateral() const;
+	LD perimeter() const;
+	LD heron_area() const;
+	Circle in_circle() const;
+	Circle out_circle() const;
+};
+
 class Geometry { public:
 	static bool is_zero( const LD & );
 	static bool are_equal( const LD &, const LD & );
@@ -90,7 +105,52 @@ class Geometry { public:
 	static Vector scale( const Vector &, const LD & );
 	static Point translate( const Point &, const Vector & );
 	static Point intersection_point( const Line &, const Line & );
+	static LD cross( const Vector &, const Vector & );
+	static LD cross( const Point &, const Point &, const Point & );
+	static LD point_side( const Point &, const Point &, const Point & );
+	static bool are_parallel( const Line &, const Line & );
 };
+
+Triangle::Triangle( const Point &pa, const Point &pb, const Point &pc ) : pa(pa), pb(pb), pc(pc) {
+	la = Line_Segment( pb, pc );
+	lb = Line_Segment( pa, pc );
+	lc = Line_Segment( pa, pb );
+}
+bool Triangle::is_valid() const {
+	return la.length() + lb.length() > lc.length() && la.length() + lc.length() > lb.length() && lb.length() + lc.length() > la.length();
+}
+bool Triangle::is_equilateral() const {
+	return Geometry::are_equal( la.length(), lb.length() ) && Geometry::are_equal( lb.length(), lc.length() );
+}
+LD Triangle::perimeter() const {
+	return la.length() + lb.length() + lc.length();
+}
+LD Triangle::heron_area() const {
+	LD s = Triangle::perimeter() / 2;
+	return sqrt( s * ( s - la.length() ) * ( s - lb.length() ) * ( s - lc.length() ) );
+}
+Circle Triangle::in_circle() const {
+	LD circle_radius = fabs( 2 * Triangle::heron_area() / Triangle::perimeter() );
+	if( Geometry::less_than( circle_radius, 0 ) ) return Circle( -1 );
+	Line L1, L2;
+	LD RATIO = Geometry::distance( pa, pb ) / Geometry::distance( pa, pc );
+	Point P = Geometry::translate( pb, Geometry::scale( Geometry::to_vector( pb, pc ), RATIO / ( 1 + RATIO ) ) );
+	L1 = Line( pa, P );
+	RATIO = Geometry::distance( pb, pa ) / Geometry::distance( pb, pc );
+	P = Geometry::translate( pa, Geometry::scale( Geometry::to_vector( pa, pc ), RATIO / ( 1 + RATIO ) ) );
+	L2 = Line( pb, P );
+	Point circle_center = Geometry::intersection_point( L1, L2 );
+	return Circle( circle_center, circle_radius );
+}
+Circle Triangle::out_circle() const {
+	LD circle_radius = la.length() * lb.length() * lc.length() / ( 4 * Triangle::heron_area() );
+	Point P1( ( pa.x + pb.x ) / 2, ( pa.y + pb.y ) / 2 );
+	Line L1 = Line( lc ).find_perpendicular( P1 );
+	Point P2( ( pc.x + pb.x ) / 2, ( pc.y + pb.y ) / 2 );
+	Line L2 = Line( la ).find_perpendicular( P2 );
+	Point circle_center = Geometry::intersection_point( L1, L2 );
+	return Circle( circle_center, circle_radius );
+}
 
 Circle::Circle( const LD &r ) : r(r) {
 	o = Point( 0, 0 );
@@ -289,6 +349,23 @@ Point Geometry::intersection_point( const Line &A, const Line &B ) {
     else
 		P.y = -( B.a * P.x + B.c );
     return P;
+}
+LD Geometry::cross( const Vector &A, const Vector &B ) {
+	return A.x * B.y - A.y * B.x;
+}
+LD Geometry::cross( const Point &O, const Point &A, const Point &B ) {
+	return ( A.x - O.x ) * ( B.y - O.y ) - ( A.y - O.y ) * ( B.x - O.x );
+}
+LD Geometry::point_side( const Point &A, const Point &B, const Point &P ) {
+	// RV < 0 : Right Side
+    // RV == 0 : Collinear
+    // RV > 0 : Left Side
+    return Geometry::cross( Geometry::to_vector( A, B ), Geometry::to_vector( A, P ) );
+}
+bool Geometry::are_parallel( const Line &A, const Line &B ) {
+	if( Geometry::is_zero( A.a ) && Geometry::are_equal( A.a, B.a ) ) return true;
+    if( Geometry::is_zero( A.b ) && Geometry::are_equal( A.b, B.b ) ) return true;
+    return Geometry::are_equal( A.a, B.a ) && Geometry::are_equal( A.b, B.b );
 }
 
 /* Geometry Library End */
