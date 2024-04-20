@@ -3,10 +3,12 @@ using namespace std;
 #define LL long long
 #define LD long double
 #define INF (1<<30)
-#define ERR (1e-9)
+#define ERR (1e-6)
 #define endl '\n'
 
 /* Geometry Library Begin */
+
+#define PI acos( -1 )
 
 class Point { public:
 	LD x, y;
@@ -104,7 +106,7 @@ class Geometry { public:
 	static Vector to_vector( const Point &, const Point & );
 	static Vector scale( const Vector &, const LD & );
 	static Point translate( const Point &, const Vector & );
-	static Point intersection_point( const Line &, const Line & );
+	static Point intersection( const Line &, const Line & );
 	static LD cross( const Vector &, const Vector & );
 	static LD cross( const Point &, const Point &, const Point & );
 	static LD point_side( const Point &, const Point &, const Point & );
@@ -112,6 +114,8 @@ class Geometry { public:
 	static Circle same_sight_circle( const Circle &, const Circle & );
 	static Line perpendicular_bisector( const Line_Segment & );
 	static Point midpoint( const Point &, const Point & );
+	static vector <Point> intersection( const Line &, const Circle & );
+	static vector <Point> intersection( const Circle &, const Circle & ); 
 };
 
 Triangle::Triangle( const Point &pa, const Point &pb, const Point &pc ) : pa(pa), pb(pb), pc(pc) {
@@ -142,7 +146,7 @@ Circle Triangle::in_circle() const {
 	RATIO = Geometry::distance( pb, pa ) / Geometry::distance( pb, pc );
 	P = Geometry::translate( pa, Geometry::scale( Geometry::to_vector( pa, pc ), RATIO / ( 1 + RATIO ) ) );
 	L2 = Line( pb, P );
-	Point circle_center = Geometry::intersection_point( L1, L2 );
+	Point circle_center = Geometry::intersection( L1, L2 );
 	return Circle( circle_center, circle_radius );
 }
 Circle Triangle::out_circle() const {
@@ -151,7 +155,7 @@ Circle Triangle::out_circle() const {
 	Line L1 = Line( lc ).find_perpendicular( P1 );
 	Point P2( ( pc.x + pb.x ) / 2, ( pc.y + pb.y ) / 2 );
 	Line L2 = Line( la ).find_perpendicular( P2 );
-	Point circle_center = Geometry::intersection_point( L1, L2 );
+	Point circle_center = Geometry::intersection( L1, L2 );
 	return Circle( circle_center, circle_radius );
 }
 
@@ -175,10 +179,10 @@ LD Circle::diameter() const {
 	return 2 * r;
 }
 LD Circle::perimeter() const {
-	return 2 * M_PI * r;
+	return 2 * PI * r;
 }
 LD Circle::area() const {
-	return M_PI * r * r;
+	return PI * r * r;
 }
 LD Circle::arc( const LD &ang ) const {
 	return ang * perimeter() / 360.0;
@@ -301,8 +305,8 @@ bool Line_Segment::contains( const Point &P ) const {
 }
 bool Line_Segment::operator == ( const Line_Segment &o ) const {
 	return 	Geometry::are_equal( a, o.a ) &&
-			Geometry::are_equal( b, o.b ) && 
-			Geometry::are_equal( c, o.c ) && 
+			Geometry::are_equal( b, o.b ) &&
+			Geometry::are_equal( c, o.c ) &&
 			t1 == o.t1 && t2 == o.t2;
 }
 
@@ -316,12 +320,12 @@ bool Geometry::less_than( const LD &v1, const LD &v2 ) {
 	return v1 < v2 - ERR;
 }
 LD Geometry::deg_to_rad( const LD &deg ) {
-	return deg * M_PI / 180.0;
+	return deg * PI / 180.0;
 }
 LD Geometry::angle( const Point &A, const Point &O, const Point &B ) {
 	Vector OA = Geometry::to_vector( O, A );
 	Vector OB = Geometry::to_vector( O, B );
-	return acos( OA * OB / sqrt( OA.modulo_nsq() * OB.modulo_nsq() ) ) * 180.0 / M_PI;
+	return acos( OA * OB / sqrt( OA.modulo_nsq() * OB.modulo_nsq() ) ) * 180.0 / PI;
 }
 LD Geometry::distance( const Point &A, const Point &B ) {
 	return sqrt( ( A.x - B.x ) * ( A.x - B.x ) + ( A.y - B.y ) * ( A.y - B.y ) );
@@ -342,7 +346,7 @@ Vector Geometry::scale( const Vector &V, const LD &S ) {
 Point Geometry::translate( const Point &P, const Vector &V ) {
 	return Point( P.x + V.x, P.y + V.y );
 }
-Point Geometry::intersection_point( const Line &A, const Line &B ) {
+Point Geometry::intersection( const Line &A, const Line &B ) {
 	Point P;
     if( !A.is_valid() || !B.is_valid() ) return Point( NAN, NAN );
     if( Geometry::are_parallel(A, B) ) return Point( NAN, NAN );
@@ -380,20 +384,85 @@ Circle Geometry::same_sight_circle( const Circle &C1, const Circle &C2 ) {
     return Circle( Point( -B/A/2, -C/A/2 ), sqrt( -D/A + ( B/A/2 * B/A/2 ) + ( C/A/2 * C/A/2 ) ) );
 }
 Line Geometry::perpendicular_bisector( const Line_Segment &ls ) {
-	const Point &p = ls.t1;
-	const Point &q = ls.t2;
-	Point midp = Geometry::midpoint( p, q );
-	if( !Geometry::is_zero( q.x - p.x ) ) { /* Wrong, check for both a horizontal line and a vertical line */
-		LD slope = ( q.y - p.y ) / ( q.x - p.x );
-		slope = - 1 / slope;
-		return Line( -slope, 1, -midp.y + slope * midp.x );
-	} else {
-		return Line( 1, 0, - ( midp.x - midp.y ) );
-	}
-	
+	return Line( ls.t1, ls.t2 ).find_perpendicular( Geometry::translate( ls.t1, Geometry::scale( Geometry::to_vector( ls.t1, ls.t2 ), 0.5 ) ) );
 }
 Point Geometry::midpoint( const Point &p, const Point &q ) {
 	return Point( ( p.x+q.x ) / 2, ( p.y+q.y ) / 2 );
+}
+vector <Point> Geometry::intersection( const Line &A, const Circle &C ) {
+	Point IP1, IP2;
+
+    LD a = A.a; LD b = A.b; LD c = A.c;
+    LD x0 = C.o.x; LD y0 = C.o.y; LD r = C.r;
+
+    if( Geometry::is_zero( A.b ) ) {
+        LD _A = 1;
+        LD _B = -2 * y0;
+        LD _C = c*c/a/a + 2*c/a*x0 + x0*x0 + y0*y0 - r*r;
+
+        LD DELTA = _B*_B - 4*_A*_C;
+        if( DELTA < -ERR ){
+            return {};
+        }
+
+        IP1 = Point( -c/a, ( -_B + sqrt( DELTA ) ) / (2*_A) );
+        IP2 = Point( -c/a, ( -_B - sqrt( DELTA ) ) / (2*_A) );
+
+        return { IP1, IP2 };
+    }
+
+    LD _A = a+1;
+    LD _B = 2*a*y0 + 2*a*c - 2*x0;
+    LD _C = c*c + 2*c*y0 + x0*x0 + y0*y0 - r*r;
+
+    LD DELTA = _B*_B - 4*_A*_C;
+    if( DELTA < -ERR ){
+        return {};
+    }
+
+    IP1 = Point( ( -_B + sqrt( DELTA ) ) / (2*_A), -a*( ( -_B + sqrt( DELTA ) ) / (2*_A) ) - c );
+    IP2 = Point( ( -_B - sqrt( DELTA ) ) / (2*_A), -a*( ( -_B - sqrt( DELTA ) ) / (2*_A) ) - c );
+
+    return { IP1, IP2 };
+}
+vector <Point> Geometry::intersection( const Circle &C1, const Circle &C2 ) {
+	Point IP1, IP2;
+	vector <Point> rv;
+
+    Point T1 = C1.o, T2 = C2.o;
+    LD W = C2.r*C2.r - C1.r*C1.r - T2.x*T2.x - T2.y*T2.y + T1.x*T1.x + T1.y*T1.y;
+    LD k = 2*T2.y - 2*T1.y;
+    LD Q = 2*T1.x - 2*T2.x;
+
+    if( Geometry::is_zero( Q ) ) {
+        LD y = ( C2.r*C2.r - C1.r*C1.r + T1.x*T1.x + T1.y*T1.y - T2.x*T2.x - T2.y*T2.y ) / ( -2*T2.y + 2*T1.y );
+        LD x1 = T1.x + sqrt( C1.r*C1.r - (T1.y-y)*(T1.y-y) );
+        LD x2 = T1.x - sqrt( C1.r*C1.r - (T1.y-y)*(T1.y-y) );
+        IP1 = Point( x1, y );
+        IP2 = Point( x2, y );
+		if( !isnan( IP1.x ) && !isnan( IP1.y ) ) rv.push_back( IP1 );
+		if( !isnan( IP2.x ) && !isnan( IP2.y ) ) rv.push_back( IP2 );
+		return rv;
+    }
+
+    W /= Q; k /= Q; Q = 1.0;
+    LD _A = k*k + Q*Q;
+    LD _B = -Q*2*k*T1.x - Q*Q*2*T1.y + 2*W*k;
+    LD _C = W*W - Q*2*T1.x*W + Q*Q*T1.x*T1.x + Q*Q*T1.y*T1.y - Q*Q*C1.r*C1.r;
+
+    LD DELTA = _B*_B - 4*_A*_C;
+    if( DELTA < 0 ){
+        return {};
+    }
+
+    LD y1 = ( -_B + sqrt( DELTA ) ) / ( 2*_A );
+    LD x1 = ( W + k*y1 ) / Q;
+    LD y2 = ( -_B - sqrt( DELTA ) ) / ( 2*_A );
+    LD x2 = ( W + k*y2 ) / Q;
+
+    IP1 = Point( x1, y1 );
+    IP2 = Point( x2, y2 );
+	return { IP1, IP2 };
 }
 
 /* Geometry Library End */
@@ -407,7 +476,7 @@ void circle_solution( vector <Point> & );
 int main()
 {
 	ios::sync_with_stdio( false );
-	
+
 	for( int i = 0 ; i < 3 ; i++ ) {
 		LD x, y, r;
 		cin >> x >> y >> r;
@@ -416,7 +485,7 @@ int main()
 
 	if( Geometry::are_equal( stadiums[0].r, stadiums[2].r ) )
 		swap( stadiums[1], stadiums[2] );
-	
+
 	vector <Point> solutions;
 
 	if(	Geometry::are_equal( stadiums[0].r, stadiums[1].r ) &&
@@ -429,9 +498,18 @@ int main()
 		circle_solution( solutions );
 	}
 
-	for( const Point &p : solutions ) {
-		cout << "[" << p.x << ", " << p.y << "]" << endl;
+	if( solutions.empty() ) return 0;
+
+	LD dist_to_stadium = Geometry::distance( solutions[0], stadiums[0].o );
+	Point &solution = solutions[0];
+	for( const Point &sol : solutions ) {
+		if( !Geometry::less_than( Geometry::distance( sol, stadiums[0].o ), dist_to_stadium ) ) continue;
+		dist_to_stadium = Geometry::distance( sol, stadiums[0].o );
+		solution = sol;
 	}
+
+	cout << fixed << setprecision(5);
+	cout << solution.x << ' ' << solution.y << endl;
 }
 
 void line_solution (
@@ -439,21 +517,39 @@ void line_solution (
 ) {
 	const Circle *s = stadiums;
 
-	assert( s[0].r == s[1].r );
-	assert( s[0].r == s[2].r );
+	assert( Geometry::are_equal( s[0].r, s[1].r ) );
+	assert( Geometry::are_equal( s[0].r, s[2].r ) );
 
 	Line p_01 = Geometry::perpendicular_bisector( Line_Segment( s[0].o, s[1].o ) );
 	Line p_02 = Geometry::perpendicular_bisector( Line_Segment( s[0].o, s[2].o ) );
 
-	rv.push_back( Geometry::intersection_point( p_01, p_02 ) );
+	rv.push_back( Geometry::intersection( p_01, p_02 ) );
 }
 
 void line_circle_solution (
 	vector <Point> &rv
 ) {
+	const Circle *s = stadiums;
+
+	assert(  Geometry::are_equal( s[0].r, s[1].r ) );
+	assert( !Geometry::are_equal( s[0].r, s[2].r ) );
+
+	Line p_01 =   Geometry::perpendicular_bisector( Line_Segment( s[0].o, s[1].o ) );
+	Circle c_02 = Geometry::same_sight_circle( s[0], s[2] );
+
+	rv = Geometry::intersection( p_01, c_02 );
 }
 
 void circle_solution (
 	vector <Point> &rv
 ) {
+	const Circle *s = stadiums;
+
+	assert( !Geometry::are_equal( s[0].r, s[1].r ) );
+	assert( !Geometry::are_equal( s[0].r, s[2].r ) );
+
+	Circle c_01 = Geometry::same_sight_circle( s[0], s[1] );
+	Circle c_02 = Geometry::same_sight_circle( s[0], s[2] );
+
+	rv = Geometry::intersection( c_01, c_02 );
 }
