@@ -110,6 +110,7 @@ class Geometry { public:
 	static LD cross( const Point &, const Point &, const Point & );
 	static LD point_side( const Point &, const Point &, const Point & );
 	static bool are_parallel( const Line &, const Line & );
+	static Circle same_sight_circle( const Circle &, const Circle & );
 };
 
 Triangle::Triangle( const Point &pa, const Point &pb, const Point &pc ) : pa(pa), pb(pb), pc(pc) {
@@ -367,6 +368,15 @@ bool Geometry::are_parallel( const Line &A, const Line &B ) {
 	if( Geometry::is_zero( A.a ) && Geometry::are_equal( A.a, B.a ) ) return true;
     if( Geometry::is_zero( A.b ) && Geometry::are_equal( A.b, B.b ) ) return true;
     return Geometry::are_equal( A.a, B.a ) && Geometry::are_equal( A.b, B.b );
+}
+Circle Geometry::same_sight_circle( const Circle &C1, const Circle &C2 ) {
+    const LD r1 = C1.r, r2 = C2.r;
+    const LD x1 = C1.o.x, y1 = C1.o.y, x2 = C2.o.x, y2 = C2.o.y;
+    const LD A = r2*r2 - r1*r1;
+    const LD B = 2*r1*r1*x2 - 2*r2*r2*x1;
+    const LD C = 2*r1*r1*y2 - 2*r2*r2*y1;
+    const LD D = r2*r2*x1*x1 + r2*r2*y1*y1 - r1*r1*x2*x2 - r1*r1*y2*y2;
+    return Circle( Point( -B/A/2, -C/A/2 ), sqrt( -D/A + ( B/A/2 * B/A/2 ) + ( C/A/2 * C/A/2 ) ) );
 }
 
 /* Geometry Library End */
