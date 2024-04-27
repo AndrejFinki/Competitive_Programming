@@ -53,37 +53,36 @@ int UnionFindDisjointSet::find_set( int p ) {
 /* UnionFindDisjointSet Class End */
 
 const int maxN = 200005;
+const int maxM = 500005;
 int N, M;
 UnionFindDisjointSet UFDS;
-unordered_map <int, int> ingredients;
+bitset <maxM> seen_ing;
+int ingredients[maxM];
 
 int main()
 {
 	ios::sync_with_stdio( false );
 	
-	int recipes_made = 0, ing, new_set;
+	int recipes_made = 0, ing, new_set, unique_ing_seen;
 	bool is_valid_recipe;
 	cin >> N;
 	for( int i = 0 ; i < N ; i++ ) {
 		cin >> M;
-		ingredients.clear();
+		seen_ing.reset();
+		int size_sum = unique_ing_seen = 0;
 		for( int j = 0 ; j < M ; j++ ) {
 			cin >> ing;
-			ingredients[ UFDS.find_set( ing ) ] += 1;
+			ing = UFDS.find_set( ing );
+			if( seen_ing.test( ing ) ) continue;
+			size_sum += UFDS.elements[ing];
+			seen_ing.set( ing );
+			ingredients[unique_ing_seen++] = ing;
 		}
-		is_valid_recipe = true;
-		for( const pair <int, int> &p : ingredients ) {
-			if( p.second == UFDS.elements[ p.first ] ) continue;
-			is_valid_recipe = false;
-			break;
-		}
-		if( !is_valid_recipe ) continue;
-		new_set = UFDS.find_set( ing );
-		for( const pair <int, int> &p : ingredients ) {
-			UFDS.merge_set( p.first, new_set );
-			ingredients[p.first] = 0;
-		}
+		if( size_sum != M ) continue;
+		new_set = ing;
 		recipes_made++;
+		for( int i = 0 ; i < unique_ing_seen ; i++ )
+			UFDS.merge_set( new_set, ingredients[i] );
 	}
 
 	cout << recipes_made << endl;
