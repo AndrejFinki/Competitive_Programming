@@ -10,9 +10,9 @@ public:
 	bool are_same_set( int, int );
 	int find_set( int );
 
-	static constexpr int MAX_SET_ELEMENT = 500005;
+	static constexpr int MAX_SET_ELEMENT = 300005;
 	int dset[MAX_SET_ELEMENT];
-	int elements[MAX_SET_ELEMENT];
+	int dset_size[MAX_SET_ELEMENT];
 
 };
 
@@ -22,7 +22,7 @@ UnionFindDisjointSet::UnionFindDisjointSet() {
 void UnionFindDisjointSet::reset_set() {
 	for( int i = 0 ; i < MAX_SET_ELEMENT ; i++ ) {
 		dset[i] = i;
-		elements[i] = 1;
+		dset_size[i] = 1;
 	}
 }
 void UnionFindDisjointSet::merge_set( int p, int q ) {
@@ -31,7 +31,7 @@ void UnionFindDisjointSet::merge_set( int p, int q ) {
 	p = find_set( p );
 	q = find_set( q );
 	dset[q] = p;
-	elements[p] += elements[q];
+	dset_size[p] += dset_size[q];
 }
 bool UnionFindDisjointSet::are_same_set( int p, int q ) {
 	return find_set( p ) == find_set( q );
