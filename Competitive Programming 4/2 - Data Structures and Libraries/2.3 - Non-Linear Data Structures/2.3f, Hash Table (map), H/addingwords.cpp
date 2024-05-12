@@ -21,7 +21,7 @@ int main(){ ios::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
 
 void calc(){
 
-    function <string(int)> get_word_for_result = [](int v) -> string{
+    function <string(int)> get_word_for_result = [](int v) -> string {
         for( const pair <string, int> &p : definitions ){
             if( p.second == v ) return p.first;
         } return "unknown";

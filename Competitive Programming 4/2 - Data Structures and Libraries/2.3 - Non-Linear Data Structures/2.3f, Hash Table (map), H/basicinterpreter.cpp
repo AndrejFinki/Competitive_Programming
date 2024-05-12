@@ -27,7 +27,7 @@ int main(){ ios::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
     run_basic();
 }
 
-void run_instruction( const Instruction &I ){ // FINISH UP IF AND PRINT COMMANDS, NEXT THING TO DO IS THE CONDITION CHECK
+void run_instruction( const Instruction &I ){
 
     function <int(string)> evaluate_var = [&]( string S ) -> int{
         return ( definition.count(S) ? definition[S] : stoi(S) );
